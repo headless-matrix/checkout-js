@@ -674,12 +674,18 @@ export function mapToPaymentProps({
         filteredMethods = filteredMethods;
     }
 
+    let index : number = 1;
+    if(consignments && consignments[0] && consignments[0]?.selectedShippingOption?.description == "Corriere Contrassegno"){
+        index = 2;
+    }
+    
+    
     return {
         applyStoreCredit: checkoutService.applyStoreCredit,
         availableStoreCredit: customer.storeCredit,
         cartUrl: config.links.cartLink,
         clearError: checkoutService.clearError,
-        defaultMethod: selectedPaymentMethod || filteredMethods[0],
+        defaultMethod: selectedPaymentMethod || filteredMethods[index],
         finalizeOrderError: getFinalizeOrderError(),
         finalizeOrderIfNeeded: checkoutService.finalizeOrderIfNeeded,
         loadCheckout: checkoutService.loadCheckout,
