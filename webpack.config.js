@@ -172,6 +172,7 @@ function appConfig(options, argv) {
                                     join(__dirname, 'packages', 'test-mocks', 'src'),
                                 ],
                             use: [
+                                'thread-loader', // Aggiunto per parallelizzare il lavoros
                                 {
                                     loader: 'babel-loader',
                                     options: {
