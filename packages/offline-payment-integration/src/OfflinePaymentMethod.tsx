@@ -25,8 +25,8 @@ const OfflinePaymentMethod: FunctionComponent<PaymentMethodProps> = ({
           const cartId = checkoutState.data.getCart()?.id || '';
           const consigment = checkoutState.data.getConsignments();
           const consigmentId: string = consigment && consigment.length > 0 ? consigment[0].id : '';
-
-          console.log('consigmentId', consigmentId, checkoutId, 'build');
+          //const consigmentAddress : any = consigment && consigment.length > 0 ? consigment[0].address : '';
+          //const lineItems : any = checkoutState.data.getCart()?.lineItems;
 
           if (checkoutId) {
             const checkoutMTX = await getMtxCheckout(checkoutId);
@@ -40,12 +40,9 @@ const OfflinePaymentMethod: FunctionComponent<PaymentMethodProps> = ({
               await updateConsignment(`/api/storefront/checkouts/`, cartId, consigmentId, {
                 shippingOptionId: shippingOptionId,
               });
-
-              checkoutService.subscribe((checkoutState) => {
-                const checkout = checkoutState.data.getCheckout();
-                const cart = checkoutState.data.getCart();
-              });
             }
+
+            console.log('buildaaa aaaa!!!');
           }
         }
         // -------------mtx end --------------
