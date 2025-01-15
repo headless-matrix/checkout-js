@@ -13,36 +13,42 @@ const OfflinePaymentMethod: FunctionComponent<PaymentMethodProps> = ({
   useEffect(() => {
     const initializePayment = async () => {
       try {
+        
         await checkoutService.initializePayment({
           gatewayId: method.gateway,
           methodId: method.id,
         });
 
+        // Carica i metodi di pagamento disponibili
+        const state = await checkoutService.loadPaymentMethods();
+        const paymentMethods = state.data.getPaymentMethods();
+        console.log("paymentMethods", paymentMethods)
+
         // -------------mtx init --------------
         if (method.id == 'cod') {
           const checkoutState = checkoutService.getState();
           const checkoutId = checkoutState.data.getCheckout()?.id;
-          const cartId = checkoutState.data.getCart()?.id || '';
-          const consigment = checkoutState.data.getConsignments();
-          const consigmentId: string = consigment && consigment.length > 0 ? consigment[0].id : '';
+          //const cartId = checkoutState.data.getCart()?.id || '';
+          //const consigment = checkoutState.data.getConsignments();
+          //const consigmentId: string = consigment && consigment.length > 0 ? consigment[0].id : '';
           //const consigmentAddress : any = consigment && consigment.length > 0 ? consigment[0].address : '';
           //const lineItems : any = checkoutState.data.getCart()?.lineItems;
 
           if (checkoutId) {
-            const checkoutMTX = await getMtxCheckout(checkoutId);
-
+            const shippingState = await checkoutService.loadShippingOptions();
+            
             const shippingOptionId =
-              checkoutMTX?.consignments?.[0]?.availableShippingOptions?.find(
-                (ship: any) => ship?.description === 'Corriere Contrassegno',
-              )?.id || null;
+            shippingState.data.getShippingOptions()?.find((ship: any) => ship?.description === 'Corriere Contrassegno')
+                ?.id || null;
 
-            if (shippingOptionId) {
-              await updateConsignment(`/api/storefront/checkouts/`, cartId, consigmentId, {
-                shippingOptionId: shippingOptionId,
+            if (shippingOptionId) {                                      
+              await checkoutService.selectShippingOption(shippingOptionId).finally(() => {
+                // UX
+                
               });
-            }
-
-            console.log('buildaaa aaaa!!!');
+                           
+              console.log("stampa di controllo....")
+            }      
           }
         }
         // -------------mtx end --------------
@@ -81,43 +87,3 @@ export default toResolvableComponent(OfflinePaymentMethod, [
     type: 'PAYMENT_TYPE_OFFLINE',
   },
 ]);
-
-function updateConsignment(url: string, cartId: string, consignmentId: string, data: any) {
-  return fetch(url + cartId + `/consignments/` + consignmentId, {
-    method: 'PUT',
-    credentials: 'same-origin',
-    headers: {
-      'Content-Type': 'application/json;',
-    },
-    body: JSON.stringify(data),
-  })
-    .then((response) => response.json())
-    .catch((error) => console.error(error));
-}
-
-async function getMtxCheckout(checkoutId: string) {
-  try {
-    // Ottieni i dettagli del carrello
-    const checkoutResponse = await fetch(
-      `/api/storefront/checkouts/${checkoutId}?include=consignments.availableShippingOptions`,
-      {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-        },
-      },
-    );
-
-    if (!checkoutResponse.ok) {
-      throw new Error('Errore nel recupero del checkout');
-    }
-
-    const checkoutData = await checkoutResponse.json();
-
-    return checkoutData;
-  } catch (error) {
-    console.error('Errore durante il recupero del checkout MTX:', error);
-  }
-
-  return null;
-}
