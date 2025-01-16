@@ -12,6 +12,8 @@ const OfflinePaymentMethod: FunctionComponent<PaymentMethodProps> = ({
 }) => {
   useEffect(() => {
     const initializePayment = async () => {
+      //console.log('Inizialize', method.id);
+
       try {
         
         await checkoutService.initializePayment({
@@ -20,36 +22,11 @@ const OfflinePaymentMethod: FunctionComponent<PaymentMethodProps> = ({
         });
 
         // Carica i metodi di pagamento disponibili
-        const state = await checkoutService.loadPaymentMethods();
-        const paymentMethods = state.data.getPaymentMethods();
-        console.log("paymentMethods", paymentMethods)
-
         // -------------mtx init --------------
         if (method.id == 'cod') {
-          const checkoutState = checkoutService.getState();
-          const checkoutId = checkoutState.data.getCheckout()?.id;
-          //const cartId = checkoutState.data.getCart()?.id || '';
-          //const consigment = checkoutState.data.getConsignments();
-          //const consigmentId: string = consigment && consigment.length > 0 ? consigment[0].id : '';
-          //const consigmentAddress : any = consigment && consigment.length > 0 ? consigment[0].address : '';
-          //const lineItems : any = checkoutState.data.getCart()?.lineItems;
-
-          if (checkoutId) {
-            const shippingState = await checkoutService.loadShippingOptions();
-            
-            const shippingOptionId =
-            shippingState.data.getShippingOptions()?.find((ship: any) => ship?.description === 'Corriere Contrassegno')
-                ?.id || null;
-
-            if (shippingOptionId) {                                      
-              await checkoutService.selectShippingOption(shippingOptionId).finally(() => {
-                // UX
-                
-              });
-                           
-              console.log("stampa di controllo....")
-            }      
-          }
+          //selectCarrier(checkoutService, "Corriere Contrassegno");
+        }else{
+          //selectCarrier(checkoutService, "Corriere  Standard");
         }
         // -------------mtx end --------------
       } catch (error) {
@@ -63,11 +40,17 @@ const OfflinePaymentMethod: FunctionComponent<PaymentMethodProps> = ({
 
     return () => {
       const deinitializePayment = async () => {
+
+        if (method.id == 'cod') {          
+          //selectCarrier(checkoutService, "Corriere  Standard");
+        }
+      
         try {
           await checkoutService.deinitializePayment({
             gatewayId: method.gateway,
             methodId: method.id,
           });
+          
         } catch (error) {
           if (error instanceof Error) {
             onUnhandledError(error);
@@ -87,3 +70,25 @@ export default toResolvableComponent(OfflinePaymentMethod, [
     type: 'PAYMENT_TYPE_OFFLINE',
   },
 ]);
+
+async function selectCarrier( checkoutService : any, carrierDescription : string ) {
+  const checkoutState = checkoutService.getState();
+  const checkoutId = checkoutState.data.getCheckout()?.id;
+  if (checkoutId) {
+    const shippingState = await checkoutService.loadShippingOptions();
+
+    const shippingOptionId =
+      shippingState.data
+        .getShippingOptions()
+        ?.find((ship: any) => ship?.description === carrierDescription)?.id || null;
+
+    console.log("shippingOptionId", shippingOptionId, carrierDescription, shippingState.data
+      .getShippingOptions());
+
+    if (shippingOptionId) {
+      await checkoutService.selectShippingOption(shippingOptionId).finally(() => {
+        // UX
+      });
+    }
+  }
+}
