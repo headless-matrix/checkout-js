@@ -12,7 +12,6 @@ const OfflinePaymentMethod: FunctionComponent<PaymentMethodProps> = ({
 }) => {
   useEffect(() => {
     const initializePayment = async () => {
-      //console.log('Inizialize', method.id);
 
       try {
         
@@ -20,15 +19,6 @@ const OfflinePaymentMethod: FunctionComponent<PaymentMethodProps> = ({
           gatewayId: method.gateway,
           methodId: method.id,
         });
-
-        // Carica i metodi di pagamento disponibili
-        // -------------mtx init --------------
-        if (method.id == 'cod') {
-          //selectCarrier(checkoutService, "Corriere Contrassegno");
-        }else{
-          //selectCarrier(checkoutService, "Corriere  Standard");
-        }
-        // -------------mtx end --------------
       } catch (error) {
         if (error instanceof Error) {
           onUnhandledError(error);
@@ -70,25 +60,3 @@ export default toResolvableComponent(OfflinePaymentMethod, [
     type: 'PAYMENT_TYPE_OFFLINE',
   },
 ]);
-
-async function selectCarrier( checkoutService : any, carrierDescription : string ) {
-  const checkoutState = checkoutService.getState();
-  const checkoutId = checkoutState.data.getCheckout()?.id;
-  if (checkoutId) {
-    const shippingState = await checkoutService.loadShippingOptions();
-
-    const shippingOptionId =
-      shippingState.data
-        .getShippingOptions()
-        ?.find((ship: any) => ship?.description === carrierDescription)?.id || null;
-
-    console.log("shippingOptionId", shippingOptionId, carrierDescription, shippingState.data
-      .getShippingOptions());
-
-    if (shippingOptionId) {
-      await checkoutService.selectShippingOption(shippingOptionId).finally(() => {
-        // UX
-      });
-    }
-  }
-}
