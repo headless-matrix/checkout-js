@@ -80,6 +80,7 @@ interface WithCheckoutPaymentProps {
   submitOrder(values: OrderRequestBody): Promise<CheckoutSelectors>;
   checkoutServiceSubscribe: CheckoutService['subscribe'];
   checkoutService: any;
+  getPaymentMethods: any;
 }
 
 import { getGlobalState, setGlobalState } from './GlobalState';
@@ -488,7 +489,7 @@ class Payment extends Component<
   };
 
   private setSelectedMethod: (method?: PaymentMethod) => void = (method) => {
-    const { checkoutService } = this.props;
+    const { checkoutService, getPaymentMethods } = this.props;
     const { selectedMethod } = this.state;
 
     if (selectedMethod === method) {
@@ -502,25 +503,9 @@ class Payment extends Component<
         selectCarrier(checkoutService, 'Corriere  Standard');
       }
 
-      console.log('method?.id', method?.id);
-
-      switch (method?.id) {
-        case 'bankdeposit':
-          setGlobalState('mtxIndexOfSelectedPayment', 0);
-          break;
-        case 'bigpaypay':
-          setGlobalState('mtxIndexOfSelectedPayment', 1);
-          break;
-        case 'cod':
-          setGlobalState('mtxIndexOfSelectedPayment', 2);
-          break;
-        case 'nexi.hosted_alias_mac':
-          setGlobalState('mtxIndexOfSelectedPayment', 3);
-          break;
-        default:
-          setGlobalState('mtxIndexOfSelectedPayment', 0);
-      }
-
+      const methodSelected = getPaymentMethods().findIndex((pay : any) => pay.id === method?.id);
+      setGlobalState('mtxIndexOfSelectedPayment', (methodSelected > -1) ? methodSelected : 0);
+                  
       this.trackSelectedPaymentMethod(method);
     }
 
@@ -726,6 +711,7 @@ export function mapToPaymentProps({
     usableStoreCredit:
       checkout.grandTotal > 0 ? Math.min(checkout.grandTotal, customer.storeCredit || 0) : 0,
     checkoutService,
+    getPaymentMethods
   };
 }
 
@@ -739,14 +725,7 @@ async function selectCarrier(checkoutService: any, carrierDescription: string) {
       shippingState.data
         .getShippingOptions()
         ?.find((ship: any) => ship?.description === carrierDescription)?.id || null;
-
-    console.log(
-      'shippingOptionId',
-      shippingOptionId,
-      carrierDescription,
-      shippingState.data.getShippingOptions(),
-    );
-
+   
     if (shippingOptionId) {
       await checkoutService.selectShippingOption(shippingOptionId).finally(() => {
         // UX
